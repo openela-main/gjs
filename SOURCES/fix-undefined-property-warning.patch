@@ -1,0 +1,67 @@
+From 69498c30904c4769de2f7b6a36eb70a8409643d0 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Florian=20M=C3=BCllner?= <fmuellner@gnome.org>
+Date: Thu, 29 Oct 2020 13:05:23 +0100
+Subject: [PATCH 1/2] gi/object: Check property before access
+
+... to avoid a harmless but annoying "access to undefined property"
+warning in case the property doesn't exist (namely the first time
+a non-introspected gtype is accessed).
+---
+ gi/object.cpp | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/gi/object.cpp b/gi/object.cpp
+index e9eba75a..ee66c6f3 100644
+--- a/gi/object.cpp
++++ b/gi/object.cpp
+@@ -1599,8 +1599,12 @@ JSObject* gjs_lookup_object_constructor_from_info(JSContext* context,
+     if (G_UNLIKELY (!in_object))
+         return NULL;
+ 
++    bool found;
++    if (!JS_HasProperty(context, in_object, constructor_name, &found))
++        return NULL;
++
+     JS::RootedValue value(context);
+-    if (!JS_GetProperty(context, in_object, constructor_name, &value))
++    if (found && !JS_GetProperty(context, in_object, constructor_name, &value))
+         return NULL;
+ 
+     JS::RootedObject constructor(context);
+-- 
+2.28.0
+
+
+From 23093ef99411a35d8eeedb74948e6c15ed19ba10 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Florian=20M=C3=BCllner?= <fmuellner@gnome.org>
+Date: Thu, 29 Oct 2020 15:29:59 +0100
+Subject: [PATCH 2/2] gi/fundamental: Check property before access
+
+... to avoid a harmless but annoying "access to undefined property"
+warning in case the property doesn't exist (namely the first time
+a non-introspected gtype is accessed).
+---
+ gi/fundamental.cpp | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/gi/fundamental.cpp b/gi/fundamental.cpp
+index 0d5d3f6d..426c7db9 100644
+--- a/gi/fundamental.cpp
++++ b/gi/fundamental.cpp
+@@ -322,8 +322,12 @@ gjs_lookup_fundamental_prototype(JSContext    *context,
+     if (G_UNLIKELY (!in_object))
+         return NULL;
+ 
++    bool found;
++    if (!JS_HasProperty(context, in_object, constructor_name, &found))
++        return nullptr;
++
+     JS::RootedValue value(context);
+-    if (!JS_GetProperty(context, in_object, constructor_name, &value))
++    if (found && !JS_GetProperty(context, in_object, constructor_name, &value))
+         return NULL;
+ 
+     JS::RootedObject constructor(context);
+-- 
+2.28.0
+
