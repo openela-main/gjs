@@ -1,0 +1,60 @@
+From bc58c3127fc6b1a2c8450b47d4dda52298cf217e Mon Sep 17 00:00:00 2001
+From: Sebastian Keller <skeller@gnome.org>
+Date: Thu, 16 Mar 2023 22:35:49 +0100
+Subject: [PATCH] function: Always initialize callback return value
+
+When callback_closure() exits early, for example due to being called
+during GC, the return value would not be initialized. This value is
+often non-zero. If the callback is a source func of an idle or a timeout
+this would then get interpreted as G_SOURCE_CONTINUE and the same would
+repeat in the next iteration. If this happens fast enough, this results
+in the entire process being seemingly frozen while spamming the log with
+error messages.
+
+To fix this always initialize the return value to 0 or a comparable
+neutral value.
+
+Related: https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/1868
+---
+ gi/function.cpp | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/gi/function.cpp b/gi/function.cpp
+index ef708f0c..551c1732 100644
+--- a/gi/function.cpp
++++ b/gi/function.cpp
+@@ -200,6 +200,12 @@ gjs_callback_closure(ffi_cif *cif,
+     g_assert(trampoline);
+     gjs_callback_trampoline_ref(trampoline);
+ 
++    context = gjs_closure_get_context(trampoline->js_function);
++
++    /* Fill in the result with some hopefully neutral value */
++    g_callable_info_load_return_type(trampoline->info, &ret_type);
++    gjs_g_argument_init_default (context, &ret_type, (GArgument *) result);
++
+     if (G_UNLIKELY(!gjs_closure_is_valid(trampoline->js_function))) {
+         warn_about_illegal_js_callback(trampoline, "during shutdown",
+             "destroying a Clutter actor or GTK widget with ::destroy signal "
+@@ -208,7 +214,6 @@ gjs_callback_closure(ffi_cif *cif,
+         return;
+     }
+ 
+-    context = gjs_closure_get_context(trampoline->js_function);
+     GjsContextPrivate* gjs = GjsContextPrivate::from_cx(context);
+     if (G_UNLIKELY(gjs->sweeping())) {
+         warn_about_illegal_js_callback(trampoline, "during garbage collection",
+@@ -445,10 +450,6 @@ out:
+                     g_base_info_get_name(trampoline->info));
+         }
+ 
+-        /* Fill in the result with some hopefully neutral value */
+-        g_callable_info_load_return_type(trampoline->info, &ret_type);
+-        gjs_g_argument_init_default (context, &ret_type, (GArgument *) result);
+-
+         /* If the callback has a GError** argument and invoking the closure
+          * returned an error, try to make a GError from it */
+         if (can_throw_gerror && rval.isObject()) {
+-- 
+2.40.0
+
