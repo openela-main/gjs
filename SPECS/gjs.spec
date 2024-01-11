@@ -5,7 +5,7 @@
 
 Name:          gjs
 Version:       1.56.2
-Release:       5%{?dist}
+Release:       6%{?dist}
 Summary:       Javascript Bindings for GNOME
 
 # The following files contain code from Mozilla which
@@ -18,6 +18,7 @@ Source0:       https://download.gnome.org/sources/%{name}/1.56/%{name}-%{version
 
 Patch0:        0001-gi-Include-missing-glib-bits.patch
 Patch1:        fix-undefined-property-warning.patch
+Patch2:        0001-function-Always-initialize-callback-return-value.patch
 
 BuildRequires: cairo-gobject-devel
 BuildRequires: chrpath
@@ -102,6 +103,10 @@ find %{buildroot} -name '*.la' -exec rm -f {} ';'
 %{_datadir}/installed-tests
 
 %changelog
+* Wed May 10 2023 Florian Müllner <fmuellner@redhat.com> - 1.56.2-6
+- Always initialize callback return value
+  Resolves: #2182508
+
 * Tue Nov 17 2020 Florian Müllner <fmuellner@redhat.co> - 1.56.2-5
 - Fix undefined property warnings
   Related: #1845660
