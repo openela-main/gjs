@@ -20,7 +20,7 @@
 
 Name:           gjs
 Version:        1.68.6
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Javascript Bindings for GNOME
 
 # The following files contain code from Mozilla which
@@ -72,6 +72,7 @@ Patch32:        0003-D94538-autoconf2.diff
 %endif
 
 Patch40:        0001-gobject-Guard-against-null-JS-wrapper-in-set-get-pro.patch
+Patch41:        0001-function-Always-initialize-callback-return-value.patch
 
 BuildRequires:  cairo-gobject-devel
 BuildRequires:  dbus-daemon
@@ -188,6 +189,7 @@ popd
 %endif
 
 %patch40 -p1
+%patch41 -p1
 
 %build
 %if 0%{?bundled_mozjs}
@@ -300,6 +302,10 @@ popd
 %{_datadir}/installed-tests/
 
 %changelog
+* Tue May 16 2023 Florian Müllner <fmuellner@redhat.com> - 1.68.6-4
+- Always initialize callback return value
+Resolves: #2196877
+
 * Wed Feb 15 2023 Florian Müllner <fmuellner@redhat.com> - 1.68.6-2
 - Guard against invalid gobject property access
 Resolves: #2170044
