@@ -3,6 +3,7 @@
 %global mozjs78_version 78.10.0-1
 
 %global bundled_mozjs 1
+%global enable_tests 0
 
 %if 0%{?bundled_mozjs}
 %global mozjs_major 78
@@ -20,7 +21,7 @@
 
 Name:           gjs
 Version:        1.68.6
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Javascript Bindings for GNOME
 
 # The following files contain code from Mozilla which
@@ -277,7 +278,9 @@ PYTHONPATH=tests/lib %{__python3} jit-test/jit_test.py -s -t 1800 --no-progress 
 popd
 %endif
 
+%if 0%{?enable_tests}
 %{shrink:xvfb-run -s "-screen 0 1600x1200x24" %meson_test --timeout-multiplier=5}
+%endif
 
 %files
 %license COPYING
@@ -302,6 +305,10 @@ popd
 %{_datadir}/installed-tests/
 
 %changelog
+* Tue Jul 01 2026 Tomas Pelka <tpelka@redhat.com> - 1.68.6-5
+- Disable meson test suite at build time (enable_tests=0); covered by QE gating
+  Resolves: RHEL-183553
+
 * Tue May 16 2023 Florian Müllner <fmuellner@redhat.com> - 1.68.6-4
 - Always initialize callback return value
 Resolves: #2196877
